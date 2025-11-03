@@ -4,11 +4,16 @@ import { logger } from "@hono/hono/logger";
 import postgres from "postgres";
 import { Redis } from "ioredis";
 
-
+const REPLICA_ID = crypto.randomUUID();
 const app = new Hono();
 const sql = postgres();
 const redis = new Redis(6379, "redis");
 
+
+app.use("*", async (c, next) => {
+    c.res.headers.set("X-Replica-Id", REPLICA_ID);
+    await next();
+});
 
 app.use("/*", cors());
 app.use("/*", logger());
