@@ -19,10 +19,7 @@ services:
     depends_on:
       - database
     deploy:
-      replicas: 5
-      resources:
-        limits:
-          cpus: '0.1'
+      replicas: 1
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.server-router.entrypoints=web"
@@ -74,3 +71,13 @@ services:
       - "8000:8000"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+  consumer-server:
+    build: consumer-server
+    restart: unless-stopped
+    volumes:
+      - ./consumer-server:/app
+    env_file:
+      - project.env
+    depends_on:
+      - redis
+      - database
