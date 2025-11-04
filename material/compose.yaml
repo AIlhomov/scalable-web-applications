@@ -15,14 +15,17 @@ services:
     volumes:
       - ./server:/app
     ports:
-      - 8000-8001:8000
+      - 8000:8000
     env_file:
       - project.env
     depends_on:
       #updated from part 1
       - database
     deploy:
-      replicas: 2
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.5'
   client:
     build: client
     restart: unless-stopped
@@ -34,7 +37,6 @@ services:
       - server
 
   k6-tests:
-    entrypoint: "/bin/true"
     build: k6-tests
     volumes:
       - ./k6-tests/tests:/tests
