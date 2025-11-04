@@ -6,10 +6,8 @@ services:
     env_file:
       - project.env
     command: >
-      postgres
-      -c shared_preload_libraries=auto_explain,pg_stat_statements
-      -c auto_explain.log_min_duration=10
-  
+      postgres -c shared_preload_libraries=auto_explain,pg_stat_statements -c auto_explain.log_min_duration=10
+
   server:
     build: server
     restart: unless-stopped
@@ -21,6 +19,7 @@ services:
       - project.env
     depends_on:
       - database
+      - redis
 
   database-migrations:
     image: flyway/flyway:10
@@ -30,7 +29,7 @@ services:
       - database
     volumes:
       - ./database-migrations:/flyway/sql
-    command: -connectRetries=60 -baselineOnMigrate=true migrate 
+    command: -connectRetries=60 -baselineOnMigrate=true migrate
 
   redis:
     image: redis:7.4.2
