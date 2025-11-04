@@ -36,3 +36,16 @@ services:
     command: redis-server /usr/local/etc/redis/redis.conf
     volumes:
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+
+  grader:
+    build: grader
+    restart: unless-stopped
+    volumes:
+      - ./grader:/app
+    ports:
+      - 7000:8000
+    env_file:
+      - project.env
+    depends_on:
+      - database
+      - redis
