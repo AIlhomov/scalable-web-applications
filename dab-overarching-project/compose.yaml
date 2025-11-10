@@ -49,3 +49,14 @@ services:
     depends_on:
       - database
       - redis
+
+  client:
+    build: client
+    restart: unless-stopped
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    ports:
+      - 4321:4321
+    depends_on:
+      - server
