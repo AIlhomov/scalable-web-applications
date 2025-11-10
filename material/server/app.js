@@ -48,4 +48,8 @@ app.get("/redis-test", async (c) => {
     return c.json({ count });
 });
 
+app.get("/api", (c) => {
+    return c.text("Hello new path!");
+});
+
 export default app;
