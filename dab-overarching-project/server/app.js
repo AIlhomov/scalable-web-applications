@@ -74,6 +74,40 @@ app.get("/api/languages/:id/exercises", async (c) => {
     return c.json(exercises);
 });
 
+app.get("/api/exercises/:id", async (c) => {
+    const { id } = c.req.param();
+    
+    // Fetch single exercise from database
+    const result = await sql`
+        SELECT id, title, description 
+        FROM exercises 
+        WHERE id = ${id}
+    `;
+    
+    if (result.length === 0) {
+        return c.body("", 404);
+    }
+    
+    return c.json(result[0]);
+});
+
+app.get("/api/submissions/:id/status", async (c) => {
+    const { id } = c.req.param();
+    
+    // Fetch submission status from database (no caching)
+    const result = await sql`
+        SELECT grading_status, grade 
+        FROM exercise_submissions 
+        WHERE id = ${id}
+    `;
+    
+    if (result.length === 0) {
+        return c.body("", 404);
+    }
+    
+    return c.json(result[0]);
+});
+
 app.post("/api/exercises/:id/submissions", async (c) => {
     const { id } = c.req.param();
     const { source_code } = await c.req.json();
