@@ -1,0 +1,22 @@
+---
+import { getCollection } from "astro:content";
+
+const recipeEntries = await getCollection("recipes");
+
+// Sort recipes by title length (shortest first)
+const sortedRecipes = recipeEntries.sort((a, b) => 
+  a.data.title.length - b.data.title.length
+);
+---
+
+<ul>
+  {
+    sortedRecipes.map((entry) => (
+      <li>
+        <a href={`/recipes/${entry.id?.replace(".mdx", "")}`}>
+          {entry.data.title}
+        </a>
+      </li>
+    ))
+  }
+</ul>
