@@ -1,5 +1,7 @@
 ---
-// Main page at /
+export const prerender = false;
+
+import LanguagesList from '../components/LanguagesList.svelte';
 ---
 
 <!DOCTYPE html>
@@ -8,9 +10,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Programming time!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+    </style>
 </head>
 <body>
-    <p>Programming time!</p>
-    <a href="/exercises/1">Start</a>
+    <LanguagesList client:load />
 </body>
 </html>

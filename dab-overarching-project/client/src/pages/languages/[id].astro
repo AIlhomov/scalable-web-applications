@@ -1,7 +1,7 @@
 ---
 export const prerender = false;
 
-import ExerciseDetail from '../../components/ExerciseDetail.svelte';
+import ExercisesList from '../../components/ExercisesList.svelte';
 const { id } = Astro.params;
 ---
 
@@ -10,7 +10,7 @@ const { id } = Astro.params;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exercise</title>
+    <title>Exercises</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,6 +21,6 @@ const { id } = Astro.params;
     </style>
 </head>
 <body>
-    <ExerciseDetail client:load exerciseId={id} />
+    <ExercisesList client:load languageId={id} />
 </body>
 </html>
