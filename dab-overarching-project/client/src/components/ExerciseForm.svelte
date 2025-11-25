@@ -1,78 +1,77 @@
 <script>
+    import { onDestroy } from "svelte";
+
     export let exerciseId = null;
 
     let code = "";
-    let showStats = false;
-    let characterCount = 0;
-    let ifCount = 0;
     let submitting = false;
     let submissionId = null;
     let submissionStatus = null;
     let error = null;
 
-    const serverUrl =
-        import.meta.env.PUBLIC_SERVER_URL || "http://localhost:8000";
-
     async function handleSubmit() {
-        // Count characters (including whitespace)
-        characterCount = code.length;
+        submitting = true;
+        error = null;
+        submissionStatus = null;
+        submissionId = null;
+        stopPolling();
 
-        // Count occurrences of "if" in the text
-        const regex = /if/g;
-        const matches = code.match(regex);
-        ifCount = matches ? matches.length : 0;
-
-        showStats = true;
-
-        // If exerciseId is provided, submit to the API
-        if (exerciseId) {
-            submitting = true;
-            error = null;
-
-            try {
-                const response = await fetch(
-                    `${serverUrl}/api/exercises/${exerciseId}/submissions`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({ source_code: code }),
+        try {
+            const response = await fetch(
+                `/api/exercises/${exerciseId}/submissions`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
                     },
-                );
+                    body: JSON.stringify({ source_code: code }),
+                },
+            );
 
-                if (response.ok) {
-                    const data = await response.json();
-                    submissionId = data.id;
-
-                    // Start polling for status
-                    pollSubmissionStatus();
-                } else {
-                    error = "Failed to submit code";
-                }
-            } catch (err) {
-                error = `Error: ${err.message}`;
-            } finally {
-                submitting = false;
+            if (response.ok) {
+                const data = await response.json();
+                submissionId = data.id;
+                startPolling();
+            } else {
+                error = "Failed to submit code";
             }
+        } catch (err) {
+            error = `Error: ${err.message}`;
+        } finally {
+            submitting = false;
         }
     }
+
+    let pollInterval = null;
+
+    function startPolling() {
+        pollSubmissionStatus();
+        pollInterval = setInterval(pollSubmissionStatus, 500);
+    }
+
+    function stopPolling() {
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+        }
+    }
+
+    onDestroy(stopPolling);
 
     async function pollSubmissionStatus() {
         if (!submissionId) return;
 
         try {
             const response = await fetch(
-                `${serverUrl}/api/submissions/${submissionId}/status`,
+                `/api/submissions/${submissionId}/status`,
             );
 
             if (response.ok) {
                 const data = await response.json();
                 submissionStatus = data;
 
-                // Continue polling if status is pending
-                if (data.grading_status === "pending") {
-                    setTimeout(pollSubmissionStatus, 1000); // Poll every second
+                if (data.grading_status === "graded") {
+                    stopPolling();
                 }
             }
         } catch (err) {
@@ -97,33 +96,9 @@
         <p class="error">{error}</p>
     {/if}
 
-    {#if showStats}
-        <div class="stats">
-            <p><strong>Code Statistics:</strong></p>
-            <p>Characters: {characterCount}</p>
-            <p>Number of "if" statements: {ifCount}</p>
-        </div>
-    {/if}
-
-    {#if submissionId}
-        <div
-            class="status {submissionStatus?.grading_status === 'graded'
-                ? 'graded'
-                : 'pending'}"
-        >
-            <p><strong>Submission ID:</strong> {submissionId}</p>
-            {#if submissionStatus}
-                <p>
-                    <strong>Status:</strong>
-                    {submissionStatus.grading_status}
-                </p>
-                {#if submissionStatus.grading_status === "graded"}
-                    <p><strong>Grade:</strong> {submissionStatus.grade}%</p>
-                {:else}
-                    <p>⏳ Grading in progress...</p>
-                {/if}
-            {/if}
-        </div>
+    {#if submissionStatus}
+        <p>Grading status: {submissionStatus.grading_status}</p>
+        <p>Grade: {submissionStatus.grade}</p>
     {/if}
 </div>
 
@@ -163,31 +138,12 @@
         cursor: not-allowed;
     }
 
-    .stats {
-        margin-top: 20px;
-        padding: 15px;
-        background-color: #e8f4f8;
-        border-radius: 4px;
-    }
-
-    .status {
-        margin-top: 20px;
-        padding: 15px;
-        border-radius: 4px;
-    }
-
-    .status.pending {
-        background-color: #fff3cd;
-        border: 1px solid #ffc107;
-    }
-
-    .status.graded {
-        background-color: #d4edda;
-        border: 1px solid #28a745;
-    }
-
     .error {
         color: #d32f2f;
         margin-top: 10px;
+    }
+
+    p {
+        margin: 10px 0;
     }
 </style>
