@@ -3,6 +3,7 @@ import { cors } from "@hono/hono/cors";
 import { logger } from "@hono/hono/logger";
 import postgres from "postgres";
 import { Redis } from "ioredis";
+import { auth } from "./auth.js";
 
 const REPLICA_ID = crypto.randomUUID();
 const app = new Hono();
@@ -11,6 +12,8 @@ const redis = new Redis(6379, "redis");
 
 const redisProducer = new Redis(6379, "redis");
 const QUEUE_NAME = "users";
+
+app.on(["POST", "GET"], "/api/auth/**", (c) => auth.handler(c.req.raw));
 
 app.use("*", async (c, next) => {
     c.res.headers.set("X-Replica-Id", REPLICA_ID);
@@ -51,5 +54,11 @@ app.get("/redis-test", async (c) => {
 app.get("/api", (c) => {
     return c.text("Hello new path!");
 });
+
+app.get("/api/lgtm-test", (c) => {
+    console.log("Hello log collection :)");
+    return c.json({ message: "Hello, world!" });
+});
+
 
 export default app;
