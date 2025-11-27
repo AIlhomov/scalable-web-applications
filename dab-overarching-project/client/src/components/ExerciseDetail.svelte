@@ -1,12 +1,14 @@
 <script>
     import { onMount } from "svelte";
     import ExerciseForm from "./ExerciseForm.svelte";
+    import { useUserState } from "../states/userState.svelte.js";
 
     export let exerciseId;
 
     let exercise = null;
     let loading = true;
     let error = null;
+    const userState = useUserState();
 
     const serverUrl =
         typeof window !== "undefined"
@@ -39,7 +41,13 @@
 {:else if exercise}
     <h1>{exercise.title}</h1>
     <p>{exercise.description}</p>
-    <ExerciseForm {exerciseId} />
+    {#if userState.loading}
+        <p>Loading user information...</p>
+    {:else if userState.email}
+        <ExerciseForm {exerciseId} />
+    {:else}
+        <p>Login or register to complete exercises.</p>
+    {/if}
 {:else}
     <p>Exercise not found.</p>
 {/if}

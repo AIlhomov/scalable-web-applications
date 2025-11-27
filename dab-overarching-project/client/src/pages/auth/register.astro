@@ -1,8 +1,8 @@
 ---
 export const prerender = false;
 
-import LanguagesList from '../components/LanguagesList.svelte';
-import UserInfo from '../components/auth/UserInfo.svelte';
+import RegistrationAndLoginForm from "../../components/auth/RegistrationAndLoginForm.svelte";
+import UserInfo from "../../components/auth/UserInfo.svelte";
 ---
 
 <!DOCTYPE html>
@@ -10,7 +10,7 @@ import UserInfo from '../components/auth/UserInfo.svelte';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Programming time!</title>
+    <title>Register</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -18,10 +18,14 @@ import UserInfo from '../components/auth/UserInfo.svelte';
             margin: 0 auto;
             padding: 20px;
         }
+        h1 {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <UserInfo client:load />
-    <LanguagesList client:load />
+    <h1>Register</h1>
+    <RegistrationAndLoginForm client:visible />
 </body>
 </html>
