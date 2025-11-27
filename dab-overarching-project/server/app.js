@@ -3,6 +3,8 @@ import { cors } from "@hono/hono/cors";
 import { logger } from "@hono/hono/logger";
 import postgres from "postgres";
 import { Redis } from "ioredis";
+import { auth } from "./auth.js";
+
 
 const app = new Hono();
 
@@ -25,6 +27,24 @@ if (Deno.env.get("REDIS_HOST")) {
 } else {
     redis = new Redis(6379, "redis");
 }
+
+const ensureAuthenticated = async (c, next) => {
+    const session = await auth.api.getSession({
+        headers: c.req.raw.headers,
+        asResponse: false,
+    }).catch(() => null);
+
+    if (!session?.session) {
+        return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    c.set("session", session);
+    await next();
+};
+
+app.on(["POST", "GET"], "/api/auth/**", (c) => auth.handler(c.req.raw));
+app.use("/api/exercises/:id/submissions", ensureAuthenticated);
+app.use("/api/submissions/:id/status", ensureAuthenticated);
 
 // Simple in-memory cache
 const cache = new Map();
