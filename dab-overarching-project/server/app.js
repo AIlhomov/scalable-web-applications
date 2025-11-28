@@ -113,12 +113,14 @@ app.get("/api/exercises/:id", async (c) => {
 
 app.get("/api/submissions/:id/status", async (c) => {
     const { id } = c.req.param();
+    const session = c.get("session");
+    const userId = session.user.id;
 
-    // Fetch submission status from database (no caching)
+    // Fetch submission status from database, checking user_id matches
     const result = await sql`
         SELECT grading_status, grade 
         FROM exercise_submissions 
-        WHERE id = ${id}
+        WHERE id = ${id} AND user_id = ${userId}
     `;
 
     if (result.length === 0) {
@@ -131,11 +133,13 @@ app.get("/api/submissions/:id/status", async (c) => {
 app.post("/api/exercises/:id/submissions", async (c) => {
     const { id } = c.req.param();
     const { source_code } = await c.req.json();
+    const session = c.get("session");
+    const userId = session.user.id;
 
-    // Insert submission into database
+    // Insert submission into database with user_id
     const result = await sql`
-        INSERT INTO exercise_submissions (exercise_id, source_code)
-        VALUES (${id}, ${source_code})
+        INSERT INTO exercise_submissions (exercise_id, source_code, user_id)
+        VALUES (${id}, ${source_code}, ${userId})
         RETURNING id
     `;
 
