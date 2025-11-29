@@ -8,6 +8,8 @@
     let submissionId = null;
     let submissionStatus = null;
     let error = null;
+    let prediction = null;
+    let predictionTimer = null;
 
     async function handleSubmit() {
         submitting = true;
@@ -56,7 +58,10 @@
         }
     }
 
-    onDestroy(stopPolling);
+    onDestroy(() => {
+        stopPolling();
+        clearPredictionTimer();
+    });
 
     async function pollSubmissionStatus() {
         if (!submissionId) return;
@@ -78,16 +83,68 @@
             console.error("Error fetching status:", err);
         }
     }
+
+    function clearPredictionTimer() {
+        if (predictionTimer) {
+            clearTimeout(predictionTimer);
+            predictionTimer = null;
+        }
+    }
+
+    function handleCodeInput() {
+        clearPredictionTimer();
+
+        if (code.trim().length > 0) {
+            predictionTimer = setTimeout(async () => {
+                await getPrediction();
+            }, 500);
+        } else {
+            prediction = null;
+        }
+    }
+
+    async function getPrediction() {
+        if (!code.trim() || !exerciseId) {
+            prediction = null;
+            return;
+        }
+
+        try {
+            const response = await fetch("/inference-api/predict", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    exercise: parseInt(exerciseId),
+                    code: code,
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                prediction = Math.round(data.prediction);
+            }
+        } catch (err) {
+            console.error("Error fetching prediction:", err);
+        }
+    }
 </script>
 
 <div class="editor-container">
     <textarea
         bind:value={code}
+        on:input={handleCodeInput}
         rows="15"
         cols="80"
         placeholder="Write your code here..."
     ></textarea>
     <br />
+
+    {#if prediction !== null}
+        <p class="prediction">Correctness estimate: {prediction}%</p>
+    {/if}
+
     <button on:click={handleSubmit} disabled={submitting}>
         {submitting ? "Submitting..." : "Submit"}
     </button>
@@ -141,6 +198,12 @@
     .error {
         color: #d32f2f;
         margin-top: 10px;
+    }
+
+    .prediction {
+        color: #2e7d32;
+        margin: 10px 0;
+        font-weight: bold;
     }
 
     p {
