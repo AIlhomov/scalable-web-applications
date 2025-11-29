@@ -65,6 +65,7 @@ services:
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false" # <--- add this
       - "--entrypoints.web.address=:8000"
     ports:
       - "8080:8080"
@@ -86,3 +87,13 @@ services:
     ports:
       - "3000:3000"
       - "4318:4318"
+  inference-api:
+    build: inference-api
+    restart: unless-stopped
+    volumes:
+      - ./inference-api:/app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.inference-api-router.entrypoints=web"
+      - "traefik.http.routers.inference-api-router.rule=PathPrefix(`/inference-api`)"
+      - "traefik.http.services.inference-api-service.loadbalancer.server.port=8000"
