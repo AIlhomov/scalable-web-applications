@@ -3,6 +3,7 @@ import { cors } from "@hono/hono/cors";
 import { logger } from "@hono/hono/logger";
 import postgres from "postgres";
 import { Redis } from "ioredis";
+import { levenshteinDistance } from "./grader-utils.js";
 
 const app = new Hono();
 
@@ -76,8 +77,26 @@ const startConsuming = async () => {
             const gradeTime = randomInt(1000, 3000);
             await sleep(gradeTime);
 
-            // Generate random grade between 0 and 100
-            const grade = randomInt(0, 100);
+            // Fetch the submission and the solution code
+            const submissionResult = await sql`
+                SELECT es.source_code, e.solution_code
+                FROM exercise_submissions es
+                JOIN exercises e ON es.exercise_id = e.id
+                WHERE es.id = ${submissionId}
+            `;
+
+            if (submissionResult.length === 0) {
+                console.error(`Submission ${submissionId} not found`);
+                continue;
+            }
+
+            const submission = submissionResult[0].source_code;
+            const solution = submissionResult[0].solution_code;
+
+            // Calculate grade based on Levenshtein distance
+            const distance = levenshteinDistance(submission, solution);
+            const maxLength = Math.max(submission.length, solution.length);
+            const grade = Math.ceil(100 * (1 - (distance / maxLength)));
 
             // Update status to "graded" and set grade
             await sql`
